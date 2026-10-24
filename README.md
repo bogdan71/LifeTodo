@@ -1,5 +1,10 @@
 # LifeTodo
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
+[![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![.NET Aspire](https://img.shields.io/badge/.NET%20Aspire-13.6-512BD4)](https://aspire.dev)
+
 A local-first life tracker: tasks, a schedule, and reminders in one place. No accounts, no cloud —
 everything lives in a single SQLite file on your machine.
 
@@ -68,6 +73,22 @@ FREQ=YEARLY
 Times are stored as local wall-clock values (no offsets), so “every Monday at 09:00” stays at 09:00
 across daylight-saving changes.
 
+## Project layout
+
+```
+LifeTodo.AppHost/        Aspire orchestrator — starts the API, Vite, and the dashboard
+LifeTodo.ServiceDefaults/ OpenTelemetry, health checks, service discovery, resilient HTTP
+LifeTodo.Api/            Minimal API endpoints, RRULE engine, reminder service, SignalR hub
+LifeTodo.Db/             EF Core DbContext and entities (TodoItem, ScheduleEvent, Reminder, Completion)
+LifeTodo.Tests/          xUnit tests for the recurrence engine
+lifetodo-web/            React + TypeScript client (Vite dev server, Tailwind, FullCalendar)
+data/                    SQLite database, created and seeded on first run (git-ignored)
+```
+
+The recurrence engine is the core piece: `RecurrenceEngine` parses an RRULE into a structured rule
+and enumerates occurrences lazily, so a “every second Tuesday” event costs nothing until a calendar
+window asks for dates.
+
 ## API
 
 | Method | Route | Purpose |
@@ -123,3 +144,7 @@ taskkill //F //IM dcp.exe
 If the API or Vite child processes also linger, `taskkill //F //IM LifeTodo.Api.exe` and closing any
 `node.exe` started by the AppHost clears them. Ctrl+C in the AppHost terminal is the clean way to
 shut the stack down.
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE) for the full text.
