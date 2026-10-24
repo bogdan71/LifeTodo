@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="LifeTodo.Api/LifeTodo.Api.csproj" />
+  <Project Path="LifeTodo.AppHost/LifeTodo.AppHost.csproj" />
+  <Project Path="LifeTodo.Db/LifeTodo.Db.csproj" />
+  <Project Path="LifeTodo.ServiceDefaults/LifeTodo.ServiceDefaults.csproj" />
+  <Project Path="LifeTodo.Tests/LifeTodo.Tests.csproj" />
+</Solution>

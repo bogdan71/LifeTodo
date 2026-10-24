@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #f4f5fa;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f7;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f3f9;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #3730a3;
+  --destructive: #e11d48;
+  --border: #e6e8f0;
+  --input: #dfe3ee;
+  --ring: #6366f1;
+  --sidebar: #0b1020;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+}
+
+::selection {
+  background: #c7d2fe;
+  color: #1e1b4b;
+}
+
+/* Thin, calm scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* --- FullCalendar v7 theme (monarch) tuned to the app palette --- */
+.fc {
+  --fc-monarch-primary: #4f46e5;
+  --fc-monarch-primary-foreground: #ffffff;
+  --fc-monarch-primary-over: #4338ca;
+  --fc-monarch-primary-down: #3730a3;
+  --fc-monarch-secondary: #eef2ff;
+  --fc-monarch-secondary-foreground: #3730a3;
+  --fc-monarch-background: #ffffff;
+  --fc-monarch-foreground: #0f172a;
+  --fc-monarch-muted-foreground: #64748b;
+  --fc-monarch-border: #e6e8f0;
+  --fc-monarch-highlight: #eef2ff;
+  --fc-monarch-today: #f5f3ff;
+  --fc-monarch-now: #e11d48;
+  --fc-monarch-selected: #4f46e5;
+  --fc-monarch-selected-foreground: #ffffff;
+  --fc-monarch-event: #4f46e5;
+  --fc-monarch-event-contrast: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+.fc a {
+  text-decoration: none;
+}
+
+.fc-event {
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+@keyframes lifetodo-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-pop {
+  animation: lifetodo-pop 160ms ease-out;
+}
