@@ -5,10 +5,10 @@ obj/
 .vs/
 
 # Local SQLite database (created and seeded on first run)
-data/
-*.db
-*.db-shm
-*.db-wal
+# Anchored to the repo root on purpose: an unanchored "data/" also matches
+# LifeTodo.Api/Data/, and "*.db" matches the LifeTodo.Db project, because git
+# compares paths case-insensitively on Windows.
+/data/
 
 # Node / Vite
 node_modules/
