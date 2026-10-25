@@ -51,9 +51,10 @@ the app.
 - **Schedule** — FullCalendar month / week / list views. Click a day to add an event, click an event
   to edit it, drag one to another day or time to reschedule it, or pull an event's trailing edge to
   change how long it lasts (an all-day chip stretched across days spans that many days). Recurring
-  events are expanded for the visible window by the API (`/api/events/occurrences`); their occurrences
-  stay put when dragged or resized, because changing one would contradict the series rule — edit the
-  series in the event dialog instead.
+  events are expanded for the visible window by the API (`/api/events/occurrences`), and dragging or
+  resizing one of their occurrences moves only that instance: the series slot keeps its identity and
+  an `EventOverride` row holds the new time. Re-timing the series itself clears those exceptions,
+  since its slots no longer line up.
 - **Reminders** — a hosted background service polls every 15 seconds and pushes due reminders over
   SignalR. The browser shows a toast and, if allowed, a desktop notification. Recurring reminders
   roll forward automatically.
@@ -83,8 +84,8 @@ across daylight-saving changes.
 LifeTodo.AppHost/        Aspire orchestrator — starts the API, Vite, and the dashboard
 LifeTodo.ServiceDefaults/ OpenTelemetry, health checks, service discovery, resilient HTTP
 LifeTodo.Api/            Minimal API endpoints, RRULE engine, reminder service, SignalR hub
-LifeTodo.Db/             EF Core DbContext and entities (TodoItem, ScheduleEvent, Reminder, Completion)
-LifeTodo.Tests/          xUnit tests for the recurrence engine
+LifeTodo.Db/             EF Core DbContext and entities (TodoItem, ScheduleEvent, EventOverride, Reminder, Completion)
+LifeTodo.Tests/          xUnit tests for the recurrence engine and occurrence building
 lifetodo-web/            React + TypeScript client (Vite dev server, Tailwind, FullCalendar)
 data/                    SQLite database, created and seeded on first run (git-ignored)
 ```

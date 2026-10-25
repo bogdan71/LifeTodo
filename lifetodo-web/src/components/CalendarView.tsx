@@ -23,7 +23,6 @@ interface CalendarViewProps {
   onEventClick: (occurrenceId: string) => void
   onEventMove: (occurrence: EventOccurrence, next: TimeSpan) => Promise<void>
   onEventResize: (occurrence: EventOccurrence, next: TimeSpan) => Promise<void>
-  onRecurringDrag: (occurrence: EventOccurrence) => void
 }
 
 /** The parts of a dropped or resized event that both handlers need. */
@@ -43,7 +42,6 @@ export function CalendarView({
   onEventClick,
   onEventMove,
   onEventResize,
-  onRecurringDrag,
 }: CalendarViewProps) {
   const byId = useMemo(
     () => new Map(occurrences.map((occurrence) => [occurrence.id, occurrence])),
@@ -60,11 +58,6 @@ export function CalendarView({
     const span = occurrence ? next(occurrence, info.event) : null
     if (!occurrence || !span) {
       info.revert()
-      return
-    }
-    if (occurrence.recurring) {
-      info.revert()
-      onRecurringDrag(occurrence)
       return
     }
     try {

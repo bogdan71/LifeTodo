@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import {
   api,
+  type OccurrenceMoveInput,
   type ReminderInput,
   type ScheduleEventInput,
   type TodoInput,
@@ -126,6 +127,22 @@ export function useEventMutations() {
     onError: (error: Error) => toast.error(error.message),
   })
 
+  const moveOccurrence = useMutation({
+    mutationFn: ({
+      eventId,
+      input,
+    }: {
+      eventId: number
+      input: OccurrenceMoveInput
+      message: string
+    }) => api.moveOccurrence(eventId, input),
+    onSuccess: (_result, variables) => {
+      refresh()
+      toast.success(variables.message)
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+
   const remove = useMutation({
     mutationFn: (id: number) => api.deleteEvent(id),
     onSuccess: () => {
@@ -135,7 +152,7 @@ export function useEventMutations() {
     onError: (error: Error) => toast.error(error.message),
   })
 
-  return { create, update, remove }
+  return { create, update, moveOccurrence, remove }
 }
 
 export function useReminderMutations() {

@@ -45,6 +45,24 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LifeTodoDbContext>();
     await db.Database.EnsureCreatedAsync();
+
+    // EnsureCreated only builds the schema for a brand-new database. This table was
+    // added later, so an existing local calendar needs it created here to keep its data.
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "EventOverrides" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_EventOverrides" PRIMARY KEY AUTOINCREMENT,
+            "ScheduleEventId" INTEGER NOT NULL,
+            "OriginalStart" TEXT NOT NULL,
+            "Start" TEXT NOT NULL,
+            "End" TEXT NOT NULL,
+            "AllDay" INTEGER NOT NULL,
+            CONSTRAINT "FK_EventOverrides_Events_ScheduleEventId" FOREIGN KEY ("ScheduleEventId")
+                REFERENCES "Events" ("Id") ON DELETE CASCADE
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_EventOverrides_ScheduleEventId_OriginalStart"
+            ON "EventOverrides" ("ScheduleEventId", "OriginalStart");
+        """);
+
     await SeedData.EnsureSeededAsync(db);
 }
 

@@ -7,6 +7,7 @@ public class LifeTodoDbContext(DbContextOptions<LifeTodoDbContext> options) : Db
 {
     public DbSet<TodoItem> Todos => Set<TodoItem>();
     public DbSet<ScheduleEvent> Events => Set<ScheduleEvent>();
+    public DbSet<EventOverride> EventOverrides => Set<EventOverride>();
     public DbSet<Reminder> Reminders => Set<Reminder>();
     public DbSet<Completion> Completions => Set<Completion>();
 
@@ -25,6 +26,15 @@ public class LifeTodoDbContext(DbContextOptions<LifeTodoDbContext> options) : Db
         {
             entity.Property(e => e.Title).HasMaxLength(300).IsRequired();
             entity.HasIndex(e => e.Start);
+        });
+
+        modelBuilder.Entity<EventOverride>(entity =>
+        {
+            entity.HasIndex(o => new { o.ScheduleEventId, o.OriginalStart }).IsUnique();
+            entity.HasOne(o => o.Event)
+                .WithMany()
+                .HasForeignKey(o => o.ScheduleEventId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Reminder>(entity =>
