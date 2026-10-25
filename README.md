@@ -49,9 +49,11 @@ the app.
 - **Recurring tasks** — a standard iCalendar RRULE is expanded by the server. Completing a recurring
   task logs the completion and rolls the due date to the next occurrence instead of closing it.
 - **Schedule** — FullCalendar month / week / list views. Click a day to add an event, click an event
-  to edit it, or drag one to another day or time to reschedule it. Recurring events are expanded for
-  the visible window by the API (`/api/events/occurrences`); their occurrences stay put when dragged,
-  because moving one would contradict the series rule — edit the series in the event dialog instead.
+  to edit it, drag one to another day or time to reschedule it, or pull an event's trailing edge to
+  change how long it lasts (an all-day chip stretched across days spans that many days). Recurring
+  events are expanded for the visible window by the API (`/api/events/occurrences`); their occurrences
+  stay put when dragged or resized, because changing one would contradict the series rule — edit the
+  series in the event dialog instead.
 - **Reminders** — a hosted background service polls every 15 seconds and pushes due reminders over
   SignalR. The browser shows a toast and, if allowed, a desktop notification. Recurring reminders
   roll forward automatically.

@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/react/timegrid'
 import themePlugin from '@fullcalendar/react/themes/monarch'
 
 import type { EventOccurrence } from '@/lib/api'
-import { moveSpan, type TimeSpan } from '@/lib/dates'
+import { moveSpan, resizeSpan, type TimeSpan } from '@/lib/dates'
 
 function nextDay(date: string): string {
   const value = new Date(date.slice(0, 10) + 'T00:00:00')
@@ -22,7 +22,19 @@ interface CalendarViewProps {
   onDateClick: (date: Date) => void
   onEventClick: (occurrenceId: string) => void
   onEventMove: (occurrence: EventOccurrence, next: TimeSpan) => Promise<void>
+  onEventResize: (occurrence: EventOccurrence, next: TimeSpan) => Promise<void>
   onRecurringDrag: (occurrence: EventOccurrence) => void
+}
+
+/** The parts of a dropped or resized event that both handlers need. */
+interface SpanChangeInfo {
+  event: {
+    start: Date | null
+    end: Date | null
+    allDay: boolean
+    extendedProps: Record<string, unknown>
+  }
+  revert: () => void
 }
 
 export function CalendarView({
@@ -30,12 +42,38 @@ export function CalendarView({
   onDateClick,
   onEventClick,
   onEventMove,
+  onEventResize,
   onRecurringDrag,
 }: CalendarViewProps) {
   const byId = useMemo(
     () => new Map(occurrences.map((occurrence) => [occurrence.id, occurrence])),
     [occurrences],
   )
+
+  const applySpan = async (
+    info: SpanChangeInfo,
+    next: (occurrence: EventOccurrence, event: SpanChangeInfo['event']) => TimeSpan | null,
+    save: (occurrence: EventOccurrence, span: TimeSpan) => Promise<void>,
+  ) => {
+    const id = info.event.extendedProps.occurrenceId as string | undefined
+    const occurrence = id ? byId.get(id) : undefined
+    const span = occurrence ? next(occurrence, info.event) : null
+    if (!occurrence || !span) {
+      info.revert()
+      return
+    }
+    if (occurrence.recurring) {
+      info.revert()
+      onRecurringDrag(occurrence)
+      return
+    }
+    try {
+      await save(occurrence, span)
+    } catch {
+      // The mutation already surfaced the error; put the event back where it was.
+      info.revert()
+    }
+  }
 
   const events = useMemo(
     () =>
@@ -64,7 +102,6 @@ export function CalendarView({
       height="auto"
       events={events}
       editable
-      eventDurationEditable={false}
       firstDay={1}
       nowIndicator
       dayMaxEvents={3}
@@ -85,26 +122,30 @@ export function CalendarView({
           onEventClick(id)
         }
       }}
-      eventDrop={async (info) => {
-        const id = info.event.extendedProps.occurrenceId as string | undefined
-        const occurrence = id ? byId.get(id) : undefined
-        const start = info.event.start
-        if (!occurrence || !start) {
-          info.revert()
-          return
-        }
-        if (occurrence.recurring) {
-          info.revert()
-          onRecurringDrag(occurrence)
-          return
-        }
-        try {
-          await onEventMove(occurrence, moveSpan(occurrence, { date: start, allDay: info.event.allDay }))
-        } catch {
-          // The mutation already surfaced the error; put the event back where it was.
-          info.revert()
-        }
-      }}
+      eventDrop={(info) =>
+        applySpan(
+          info,
+          (occurrence, event) =>
+            event.start
+              ? moveSpan(occurrence, { date: event.start, allDay: event.allDay })
+              : null,
+          onEventMove,
+        )
+      }
+      eventResize={(info) =>
+        applySpan(
+          info,
+          (occurrence, event) =>
+            event.start
+              ? resizeSpan(occurrence, {
+                  start: event.start,
+                  end: event.end,
+                  allDay: event.allDay,
+                })
+              : null,
+          onEventResize,
+        )
+      }
       eventContent={(info) => (
         <div className="flex min-w-0 items-center gap-1.5 truncate px-1.5 py-0.5">
           <span className="truncate text-[11px] leading-tight font-medium">{info.event.title}</span>

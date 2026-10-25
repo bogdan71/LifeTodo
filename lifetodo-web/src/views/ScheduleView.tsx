@@ -36,7 +36,7 @@ export function ScheduleView() {
     }
   }
 
-  const handleEventMove = async (occurrence: EventOccurrence, next: TimeSpan) => {
+  const saveSpan = async (occurrence: EventOccurrence, next: TimeSpan, message: string) => {
     const event = byId.get(occurrence.eventId)
     if (!event) {
       throw new Error('That event is no longer in your schedule.')
@@ -55,9 +55,15 @@ export function ScheduleView() {
         color: event.color,
         recurrenceRule: event.recurrenceRule,
       },
-      message: `Moved “${event.title}”`,
+      message,
     })
   }
+
+  const handleEventMove = (occurrence: EventOccurrence, next: TimeSpan) =>
+    saveSpan(occurrence, next, `Moved “${occurrence.title}”`)
+
+  const handleEventResize = (occurrence: EventOccurrence, next: TimeSpan) =>
+    saveSpan(occurrence, next, `Resized “${occurrence.title}”`)
 
   const handleRecurringDrag = (occurrence: EventOccurrence) => {
     toast.info(`“${occurrence.title}” repeats — open it to change the whole series.`, {
@@ -98,6 +104,7 @@ export function ScheduleView() {
             onDateClick={(date) => setDialog({ open: true, event: null, date })}
             onEventClick={handleOccurrenceClick}
             onEventMove={handleEventMove}
+            onEventResize={handleEventResize}
             onRecurringDrag={handleRecurringDrag}
           />
         )}
@@ -117,7 +124,7 @@ export function ScheduleView() {
           <Repeat2 className="size-3" /> Recurring (expanded server-side from RRULE)
         </span>
         <span className="flex items-center gap-1.5">
-          <Move className="size-3" /> Drag an event to reschedule it
+          <Move className="size-3" /> Drag an event to reschedule it, or pull its edge to change its length
         </span>
       </div>
 

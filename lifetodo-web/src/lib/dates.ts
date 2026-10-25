@@ -151,3 +151,40 @@ export function moveSpan(span: TimeSpan, target: { date: Date; allDay: boolean }
     allDay: target.allDay,
   }
 }
+
+/**
+ * Rebuilds a span after its end was dragged, keeping the start where it was.
+ * Stored all-day events run 00:00–23:59 of their last day, while the calendar
+ * treats an all-day end as exclusive, so the two are reconciled here.
+ */
+export function resizeSpan(
+  span: TimeSpan,
+  target: { start: Date; end: Date | null; allDay: boolean },
+): TimeSpan {
+  const start = parseLocal(target.start ?? span.start)
+  const original = parseLocal(span.end)
+
+  if (target.allDay) {
+    // The calendar's all-day end is the exclusive start of the next day, so a
+    // chip covering 21–23 October arrives as 21 October → 24 October midnight.
+    const startDay = startOfDay(start)
+    const endDay = target.end ? startOfDay(target.end) : addDays(startDay, 1)
+    const days = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / DAY_MS))
+    const last = addDays(startDay, days - 1)
+    return {
+      start: toLocalIso(startDay),
+      end: toLocalIso(new Date(last.getFullYear(), last.getMonth(), last.getDate(), 23, 59, 0, 0)),
+      allDay: true,
+    }
+  }
+
+  const end = target.end ?? original
+
+  // An end at or before the start would store a zero-length event, which the
+  // occurrence builder renders as a thin sliver; keep the current length.
+  if (end.getTime() <= start.getTime()) {
+    return { start: toLocalIso(start), end: toLocalIso(original), allDay: false }
+  }
+
+  return { start: toLocalIso(start), end: toLocalIso(end), allDay: false }
+}
