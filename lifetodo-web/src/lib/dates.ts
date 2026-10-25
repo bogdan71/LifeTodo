@@ -112,3 +112,42 @@ export function pluralize(count: number, singular: string, plural = `${singular}
 export function toCalendarDate(value: string): string {
   return value.slice(0, 19)
 }
+
+export interface TimeSpan {
+  start: string
+  end: string
+  allDay: boolean
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Re-anchors a span onto the day and time it was dragged to, keeping its length.
+ * Times are local wall-clock, so the drop target's date and time are used as-is.
+ */
+export function moveSpan(span: TimeSpan, target: { date: Date; allDay: boolean }): TimeSpan {
+  const start = target.allDay
+    ? startOfDay(target.date)
+    : new Date(
+        target.date.getFullYear(),
+        target.date.getMonth(),
+        target.date.getDate(),
+        target.date.getHours(),
+        target.date.getMinutes(),
+        0,
+        0,
+      )
+
+  const existing = Math.max(parseLocal(span.end).getTime() - parseLocal(span.start).getTime(), 0)
+  const length = target.allDay
+    ? DAY_MS - 60_000
+    : span.allDay
+      ? 60 * 60 * 1000
+      : existing
+
+  return {
+    start: toLocalIso(start),
+    end: toLocalIso(new Date(start.getTime() + length)),
+    allDay: target.allDay,
+  }
+}

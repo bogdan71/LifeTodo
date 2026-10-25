@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, Info, Plus, Repeat2 } from 'lucide-react'
+import { CalendarDays, Info, Move, Plus, Repeat2 } from 'lucide-react'
+import { toast } from 'sonner'
 
-import type { ScheduleEvent } from '@/lib/api'
+import type { EventOccurrence, ScheduleEvent } from '@/lib/api'
+import type { TimeSpan } from '@/lib/dates'
 import { CalendarView } from '@/components/CalendarView'
 import { EventDialog } from '@/components/EventDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useEvents, useOccurrences } from '@/hooks/useLifeData'
+import { useEventMutations, useEvents, useOccurrences } from '@/hooks/useLifeData'
 
 export function ScheduleView() {
   const occurrences = useOccurrences()
   const events = useEvents()
+  const { update } = useEventMutations()
   const [dialog, setDialog] = useState<{ open: boolean; event: ScheduleEvent | null; date?: Date }>({
     open: false,
     event: null,
@@ -31,6 +34,35 @@ export function ScheduleView() {
     if (event) {
       setDialog({ open: true, event })
     }
+  }
+
+  const handleEventMove = async (occurrence: EventOccurrence, next: TimeSpan) => {
+    const event = byId.get(occurrence.eventId)
+    if (!event) {
+      throw new Error('That event is no longer in your schedule.')
+    }
+
+    // PUT replaces the whole record, so carry the untouched fields along.
+    await update.mutateAsync({
+      id: event.id,
+      input: {
+        title: event.title,
+        notes: event.notes,
+        location: event.location,
+        start: next.start,
+        end: next.end,
+        allDay: next.allDay,
+        color: event.color,
+        recurrenceRule: event.recurrenceRule,
+      },
+      message: `Moved “${event.title}”`,
+    })
+  }
+
+  const handleRecurringDrag = (occurrence: EventOccurrence) => {
+    toast.info(`“${occurrence.title}” repeats — open it to change the whole series.`, {
+      description: 'Individual occurrences of a repeating event stay on their schedule.',
+    })
   }
 
   const recurringCount = (events.data ?? []).filter((event) => event.recurrenceRule).length
@@ -65,6 +97,8 @@ export function ScheduleView() {
             occurrences={occurrences.data ?? []}
             onDateClick={(date) => setDialog({ open: true, event: null, date })}
             onEventClick={handleOccurrenceClick}
+            onEventMove={handleEventMove}
+            onRecurringDrag={handleRecurringDrag}
           />
         )}
       </Card>
@@ -81,6 +115,9 @@ export function ScheduleView() {
         </span>
         <span className="flex items-center gap-1.5">
           <Repeat2 className="size-3" /> Recurring (expanded server-side from RRULE)
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Move className="size-3" /> Drag an event to reschedule it
         </span>
       </div>
 

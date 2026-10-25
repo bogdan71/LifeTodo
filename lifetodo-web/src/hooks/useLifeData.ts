@@ -117,11 +117,11 @@ export function useEventMutations() {
   })
 
   const update = useMutation({
-    mutationFn: ({ id, input }: { id: number; input: ScheduleEventInput }) =>
+    mutationFn: ({ id, input }: { id: number; input: ScheduleEventInput; message?: string }) =>
       api.updateEvent(id, input),
-    onSuccess: () => {
+    onSuccess: (_event, variables) => {
       refresh()
-      toast.success('Event updated')
+      toast.success(variables.message ?? 'Event updated')
     },
     onError: (error: Error) => toast.error(error.message),
   })
