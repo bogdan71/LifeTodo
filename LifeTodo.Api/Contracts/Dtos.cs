@@ -108,6 +108,8 @@ public record ReminderRequest(
     string? RecurrenceRule);
 
 /// <summary>A single, concrete instance of a possibly recurring event.</summary>
+/// <param name="OriginalStart">The slot the series produced, which identifies the occurrence.</param>
+/// <param name="Detached">True when this occurrence was moved away from its series slot.</param>
 public record EventOccurrenceDto(
     string Id,
     int EventId,
@@ -118,7 +120,16 @@ public record EventOccurrenceDto(
     DateTime End,
     bool AllDay,
     string Color,
-    bool Recurring);
+    bool Recurring,
+    DateTime OriginalStart,
+    bool Detached);
+
+/// <summary>Moves one occurrence of a repeating event, leaving the rest of the series alone.</summary>
+public record OccurrenceMoveRequest(
+    DateTime? OriginalStart,
+    DateTime? Start,
+    DateTime? End,
+    bool? AllDay);
 
 public record DayPoint(string Date, string Label, int Count);
 

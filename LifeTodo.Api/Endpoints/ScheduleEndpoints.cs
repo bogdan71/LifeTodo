@@ -38,35 +38,74 @@ public static class ScheduleEndpoints
             }
 
             var events = await db.Events.AsNoTracking().ToListAsync();
-            var occurrences = new List<EventOccurrenceDto>();
+            var overrides = await db.EventOverrides.AsNoTracking().ToListAsync();
 
-            foreach (var item in events)
+            return Results.Ok(OccurrenceBuilder.Build(events, overrides, engine, rangeStart, rangeEnd));
+        });
+
+        /// <summary>
+        /// Moves a single occurrence of a repeating event, leaving the rest of the series
+        /// where it is. The series slot it came from stays the identity of this occurrence.
+        /// </summary>
+        app.MapPut("/api/events/{id:int}/occurrences", async (
+            int id,
+            OccurrenceMoveRequest request,
+            LifeTodoDbContext db,
+            IHubContext<TodoHub> hub) =>
+        {
+            var item = await db.Events.FindAsync(id);
+            if (item is null)
             {
-                var duration = item.End - item.Start;
-                if (duration < TimeSpan.Zero)
-                {
-                    duration = TimeSpan.FromMinutes(30);
-                }
-
-                var starts = engine.Expand(item.RecurrenceRule, item.Start, rangeStart, rangeEnd);
-
-                foreach (var start in starts)
-                {
-                    occurrences.Add(new EventOccurrenceDto(
-                        $"{item.Id}:{start:yyyyMMddTHHmmss}",
-                        item.Id,
-                        item.Title,
-                        item.Notes,
-                        item.Location,
-                        start,
-                        start + duration,
-                        item.AllDay,
-                        item.Color,
-                        !string.IsNullOrWhiteSpace(item.RecurrenceRule)));
-                }
+                return Results.NotFound(new ErrorResponse("Event not found."));
             }
 
-            return Results.Ok(occurrences.OrderBy(o => o.Start));
+            if (string.IsNullOrWhiteSpace(item.RecurrenceRule))
+            {
+                return Results.BadRequest(new ErrorResponse("Only a repeating event has occurrences to move."));
+            }
+
+            if (request.OriginalStart is not DateTime originalStart || request.Start is not DateTime start)
+            {
+                return Results.BadRequest(new ErrorResponse("The occurrence and its new start are both required."));
+            }
+
+            var duration = item.End - item.Start;
+            if (duration <= TimeSpan.Zero)
+            {
+                duration = TimeSpan.FromMinutes(30);
+            }
+
+            var end = request.End ?? start + duration;
+            if (end <= start)
+            {
+                end = start + duration;
+            }
+
+            var existing = await db.EventOverrides.FirstOrDefaultAsync(o =>
+                o.ScheduleEventId == id && o.OriginalStart == originalStart);
+
+            if (existing is null)
+            {
+                db.EventOverrides.Add(new EventOverride
+                {
+                    ScheduleEventId = id,
+                    OriginalStart = originalStart,
+                    Start = start,
+                    End = end,
+                    AllDay = request.AllDay ?? item.AllDay
+                });
+            }
+            else
+            {
+                existing.Start = start;
+                existing.End = end;
+                existing.AllDay = request.AllDay ?? item.AllDay;
+            }
+
+            await db.SaveChangesAsync();
+            await hub.Clients.All.SendAsync("eventsChanged");
+
+            return Results.NoContent();
         });
 
         app.MapPost("/api/events", async (
@@ -136,6 +175,9 @@ public static class ScheduleEndpoints
                 end = start.AddHours(1);
             }
 
+            var rule = NormalizeRule(request.RecurrenceRule);
+            var seriesMoved = item.Start != start || item.RecurrenceRule != rule;
+
             item.Title = request.Title.Trim();
             item.Notes = request.Notes?.Trim();
             item.Location = request.Location?.Trim();
@@ -143,7 +185,13 @@ public static class ScheduleEndpoints
             item.End = end;
             item.AllDay = request.AllDay ?? item.AllDay;
             item.Color = NormalizeColor(request.Color);
-            item.RecurrenceRule = NormalizeRule(request.RecurrenceRule);
+            item.RecurrenceRule = rule;
+
+            // Re-timing the series moves its slots, so per-occurrence moves no longer apply.
+            if (seriesMoved)
+            {
+                db.EventOverrides.RemoveRange(db.EventOverrides.Where(o => o.ScheduleEventId == id));
+            }
 
             await db.SaveChangesAsync();
             await hub.Clients.All.SendAsync("eventsChanged");

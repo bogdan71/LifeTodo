@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays, Info, Move, Plus, Repeat2 } from 'lucide-react'
-import { toast } from 'sonner'
 
 import type { EventOccurrence, ScheduleEvent } from '@/lib/api'
 import type { TimeSpan } from '@/lib/dates'
@@ -13,7 +12,7 @@ import { useEventMutations, useEvents, useOccurrences } from '@/hooks/useLifeDat
 export function ScheduleView() {
   const occurrences = useOccurrences()
   const events = useEvents()
-  const { update } = useEventMutations()
+  const { update, moveOccurrence } = useEventMutations()
   const [dialog, setDialog] = useState<{ open: boolean; event: ScheduleEvent | null; date?: Date }>({
     open: false,
     event: null,
@@ -37,6 +36,21 @@ export function ScheduleView() {
   }
 
   const saveSpan = async (occurrence: EventOccurrence, next: TimeSpan, message: string) => {
+    if (occurrence.recurring) {
+      // Leave the series alone and move just the instance that was dragged.
+      await moveOccurrence.mutateAsync({
+        eventId: occurrence.eventId,
+        input: {
+          originalStart: occurrence.originalStart,
+          start: next.start,
+          end: next.end,
+          allDay: next.allDay,
+        },
+        message,
+      })
+      return
+    }
+
     const event = byId.get(occurrence.eventId)
     if (!event) {
       throw new Error('That event is no longer in your schedule.')
@@ -60,16 +74,22 @@ export function ScheduleView() {
   }
 
   const handleEventMove = (occurrence: EventOccurrence, next: TimeSpan) =>
-    saveSpan(occurrence, next, `Moved “${occurrence.title}”`)
+    saveSpan(
+      occurrence,
+      next,
+      occurrence.recurring
+        ? `Moved this occurrence of “${occurrence.title}”`
+        : `Moved “${occurrence.title}”`,
+    )
 
   const handleEventResize = (occurrence: EventOccurrence, next: TimeSpan) =>
-    saveSpan(occurrence, next, `Resized “${occurrence.title}”`)
-
-  const handleRecurringDrag = (occurrence: EventOccurrence) => {
-    toast.info(`“${occurrence.title}” repeats — open it to change the whole series.`, {
-      description: 'Individual occurrences of a repeating event stay on their schedule.',
-    })
-  }
+    saveSpan(
+      occurrence,
+      next,
+      occurrence.recurring
+        ? `Resized this occurrence of “${occurrence.title}”`
+        : `Resized “${occurrence.title}”`,
+    )
 
   const recurringCount = (events.data ?? []).filter((event) => event.recurrenceRule).length
 
@@ -105,7 +125,6 @@ export function ScheduleView() {
             onEventClick={handleOccurrenceClick}
             onEventMove={handleEventMove}
             onEventResize={handleEventResize}
-            onRecurringDrag={handleRecurringDrag}
           />
         )}
       </Card>
@@ -124,7 +143,8 @@ export function ScheduleView() {
           <Repeat2 className="size-3" /> Recurring (expanded server-side from RRULE)
         </span>
         <span className="flex items-center gap-1.5">
-          <Move className="size-3" /> Drag an event to reschedule it, or pull its edge to change its length
+          <Move className="size-3" /> Drag to reschedule or pull an edge to resize — on a repeating
+          event it changes only that occurrence
         </span>
       </div>
 

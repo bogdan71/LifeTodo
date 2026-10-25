@@ -59,6 +59,17 @@ export interface EventOccurrence {
   allDay: boolean
   color: string
   recurring: boolean
+  /** The slot the series produced; identifies the occurrence when moving just this one. */
+  originalStart: string
+  /** True once this occurrence has been moved away from its series slot. */
+  detached: boolean
+}
+
+export interface OccurrenceMoveInput {
+  originalStart: string
+  start: string
+  end: string
+  allDay?: boolean
 }
 
 export interface Reminder {
@@ -169,6 +180,8 @@ export const api = {
   updateEvent: (id: number, input: ScheduleEventInput) =>
     request<ScheduleEvent>(`/api/events/${id}`, { method: 'PUT', body: json(input) }),
   deleteEvent: (id: number) => request<void>(`/api/events/${id}`, { method: 'DELETE' }),
+  moveOccurrence: (eventId: number, input: OccurrenceMoveInput) =>
+    request<void>(`/api/events/${eventId}/occurrences`, { method: 'PUT', body: json(input) }),
 
   reminders: () => request<Reminder[]>('/api/reminders'),
   createReminder: (input: ReminderInput) =>
