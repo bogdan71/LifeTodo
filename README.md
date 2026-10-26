@@ -54,7 +54,9 @@ the app.
   events are expanded for the visible window by the API (`/api/events/occurrences`), and dragging or
   resizing one of their occurrences moves only that instance: the series slot keeps its identity and
   an `EventOverride` row holds the new time. Re-timing the series itself clears those exceptions,
-  since its slots no longer line up.
+  since its slots no longer line up. Every event carries one of six named colours (Focus / work,
+  Meetings, Health, Personal, Family, Learning) from a single palette that feeds the picker, the
+  calendar dots and blocks, and the legend below the grid.
 - **Reminders** — a hosted background service polls every 15 seconds and pushes due reminders over
   SignalR. The browser shows a toast and, if allowed, a desktop notification. Recurring reminders
   roll forward automatically.

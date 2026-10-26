@@ -8,6 +8,7 @@ import themePlugin from '@fullcalendar/react/themes/monarch'
 
 import type { EventOccurrence } from '@/lib/api'
 import { moveSpan, resizeSpan, type TimeSpan } from '@/lib/dates'
+import { readableTextColor } from '@/lib/eventColors'
 
 function nextDay(date: string): string {
   const value = new Date(date.slice(0, 10) + 'T00:00:00')
@@ -76,9 +77,10 @@ export function CalendarView({
         start: occurrence.allDay ? occurrence.start.slice(0, 10) : occurrence.start,
         end: occurrence.allDay ? nextDay(occurrence.end) : occurrence.end,
         allDay: occurrence.allDay,
-        backgroundColor: occurrence.color,
-        borderColor: occurrence.color,
-        textColor: '#ffffff',
+        // FullCalendar 7 dropped backgroundColor/borderColor/textColor; `color`
+        // and `contrastColor` are what the theme actually reads.
+        color: occurrence.color,
+        contrastColor: readableTextColor(occurrence.color),
         extendedProps: {
           occurrenceId: occurrence.id,
           location: occurrence.location,

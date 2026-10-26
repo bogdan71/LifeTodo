@@ -3,6 +3,7 @@ import { CalendarDays, Info, Move, Plus, Repeat2 } from 'lucide-react'
 
 import type { EventOccurrence, ScheduleEvent } from '@/lib/api'
 import type { TimeSpan } from '@/lib/dates'
+import { EVENT_COLORS } from '@/lib/eventColors'
 import { CalendarView } from '@/components/CalendarView'
 import { EventDialog } from '@/components/EventDialog'
 import { Button } from '@/components/ui/button'
@@ -130,15 +131,11 @@ export function ScheduleView() {
       </Card>
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#6366f1]" /> Focus / work
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#0ea5e9]" /> Meetings
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#f59e0b]" /> Personal
-        </span>
+        {EVENT_COLORS.map(({ value, name }) => (
+          <span key={value} className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full" style={{ backgroundColor: value }} /> {name}
+          </span>
+        ))}
         <span className="flex items-center gap-1.5">
           <Repeat2 className="size-3" /> Recurring (expanded server-side from RRULE)
         </span>
