@@ -24,8 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RecurrenceField } from '@/components/RecurrenceField'
 import { useEventMutations } from '@/hooks/useLifeData'
-
-const COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6']
+import { DEFAULT_EVENT_COLOR, EVENT_COLORS, eventColorName } from '@/lib/eventColors'
 
 interface EventFormProps {
   event?: ScheduleEvent | null
@@ -45,7 +44,7 @@ function EventForm({ event, defaultDate, onDone }: EventFormProps) {
   const [startTime, setStartTime] = useState(timeInputValue(initialStart))
   const [endTime, setEndTime] = useState(timeInputValue(initialEnd))
   const [allDay, setAllDay] = useState(event?.allDay ?? false)
-  const [color, setColor] = useState(event?.color ?? COLORS[0])
+  const [color, setColor] = useState(event?.color ?? DEFAULT_EVENT_COLOR)
   const [recurrenceRule, setRecurrenceRule] = useState<string | null>(event?.recurrenceRule ?? null)
 
   const pending = create.isPending || update.isPending || remove.isPending
@@ -184,20 +183,24 @@ function EventForm({ event, defaultDate, onDone }: EventFormProps) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>Colour</Label>
+        <Label>
+          Colour
+          <span className="ml-1.5 font-normal text-muted-foreground">{eventColorName(color)}</span>
+        </Label>
         <div className="flex gap-2">
-          {COLORS.map((swatch) => (
+          {EVENT_COLORS.map(({ value, name }) => (
             <button
-              key={swatch}
+              key={value}
               type="button"
-              onClick={() => setColor(swatch)}
-              aria-label={`Use colour ${swatch}`}
-              aria-pressed={color === swatch}
+              title={name}
+              onClick={() => setColor(value)}
+              aria-label={`Use colour ${name}`}
+              aria-pressed={color === value}
               className={cn(
                 'size-7 rounded-full ring-offset-2 transition-all',
-                color === swatch ? 'ring-2 ring-slate-900' : 'hover:scale-110',
+                color === value ? 'ring-2 ring-slate-900' : 'hover:scale-110',
               )}
-              style={{ backgroundColor: swatch }}
+              style={{ backgroundColor: value }}
             />
           ))}
         </div>
